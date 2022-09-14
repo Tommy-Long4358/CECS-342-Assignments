@@ -221,7 +221,7 @@ int lex()
             break;
 
         case UNKNOWN:
-            lookup(nextChar);
+            nextToken = lookup(nextChar);
             getChar();
 
             break;
