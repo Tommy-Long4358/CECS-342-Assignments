@@ -29,7 +29,6 @@ void my_initialize_heap(int size)
 
     // Initialize header with appropiate values for block_size and next_block
     // Change the block size of free head to the new allocated size
-    
     free_head->block_size = size - OVERHEAD_SIZE;
     
     // Next Block is free
@@ -42,8 +41,8 @@ void* my_alloc(int size)
 {
     if (size <= 0) 
     {
-	printf("Size must be greater than 0");
-	return 0;
+	    printf("Size must be greater than 0");
+	    return 0;
     }
 
 	// size must be a multiple of POINTER_SIZE. So, 
@@ -72,27 +71,39 @@ void* my_alloc(int size)
             // Splittable 
             // data portion has to fit rounded up size being allocated, the excess space has to 
             // fit another block with overhead and pointer size
-			if (curr->block_size - size >= OVERHEAD_SIZE + POINTER_SIZE) 
+			if (curr->block_size - size - OVERHEAD_SIZE - POINTER_SIZE >= 0) 
             { 
 				// Create a pointer to the newly split block's position then assign its structure members.
 				// Find byte location of where new block will start based on location of block being split and size.
                 //Your code
-                struct Block * new_block = (struct Block *)((char *) curr->block_size + size + OVERHEAD_SIZE);
+                struct Block * new_block = (struct Block *)((char *) curr + size + OVERHEAD_SIZE);
                 
-                // Replace block with new block and link to the next block of current
-                new_block->next_block = curr->next_block;
 
-                free_head = new_block;
-				// Update Curr's block size as a result of splitting.
+                // Assign new block size of new_block
+                new_block->block_size = curr->block_size + size + OVERHEAD_SIZE;
+
+                // Update Curr's block size as a result of splitting.
+                // Reduce the size of the original block to match the allocation request.
                 //Your code
-                
-                
-
 
 				// Adjust the double linked list, depending on whether curr is the head or not.
                 //Your code
 
-				
+                if (curr == free_head)
+                {
+                    new_block->next_block = curr;
+                    free_head = new_block;
+                }
+                else
+                {
+                    // Replace block with new block and link to the next block of current
+                    new_block->next_block = prev->next_block;
+                    prev->next_block = new_block;
+                    
+                }
+                
+                curr->block_size -= new_block->block_size;
+
 			}
 			else 
             { // Not splittable
@@ -118,23 +129,27 @@ void* my_alloc(int size)
 		else 
         {
 			//Your code
+            prev = curr;
             curr = curr->next_block;
 		}
 	}
 	// Return a pointer to the allocated data, if possible.
 	//Your code
-    if (curr == NULL)
-    {
-        return NULL;
-    }
 
-    
+    if (found == true)
+    {
+        return (void*)((char*) curr + OVERHEAD_SIZE);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void my_free(void* data) {
-	struct Block* freed_block = _____________________________;
-	freed_block->next_block = ____________;
-	free_head = ______________________;
+	struct Block* freed_block = (struct Block*)((char*) data - OVERHEAD_SIZE);
+	freed_block->next_block = free_head;
+	free_head = freed_block;
 }
 
 void menuOptionOne() {
@@ -269,5 +284,3 @@ int main()
     } 
     return 0;
 }
-
-
