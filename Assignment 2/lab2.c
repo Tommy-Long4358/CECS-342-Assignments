@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 // Struct keeps many different data types into one type.
+// 12 bytes becasue int is 4 bytes + pointer is 8 bytes = 12 bytes
 struct Block {
     // Number of bytes in the data section
 	int block_size;
@@ -13,6 +14,8 @@ struct Block {
 
 // refers to size & pointer of a block
 const OVERHEAD_SIZE = sizeof(struct Block);
+
+// 8 byte pointer bc my PC is 64-bit
 const POINTER_SIZE = sizeof(void*);
 
 // Points to first free block in the free list.
@@ -21,27 +24,34 @@ struct Block* free_head;
 void my_initialize_heap(int size) 
 {
     // have free_head point to buffer
-	free_head->next_block = malloc(size);
+    // Allocates a block of memory that is of parameter size bytes of memory.
+    free_head = (struct Block*)malloc(size);
 
     // Initialize header with appropiate values for block_size and next_block
-    free_head->block_size = size;
+    // Change the block size of free head to the new allocated size
+    
+    free_head->block_size = size - OVERHEAD_SIZE;
+    
+    // Next Block is free
+    free_head->next_block = NULL;
 }
 
 // Fills an allocation request of "size" bytes and returns a 
 // pointer to the data portion of the block used to satisfy the request.
 void* my_alloc(int size) 
 {
-	if (size <= 0) 
+    if (size <= 0) 
     {
-		printf("Size must be greater than 0");
-		return 0;
-	}
+	printf("Size must be greater than 0");
+	return 0;
+    }
 
 	// size must be a multiple of POINTER_SIZE. So, 
     // if pointer_size is 4, size must be atleast 4, 8, 12...
-	if (size % POINTER_SIZE == 0 || POINTER_SIZE % size == 0)
+	if (size % POINTER_SIZE == 0)
     {
-        free_head->block_size -= size;
+        int fragmentation = free_head->block_size - size;
+        size = fragmentation;
     }
     
 	// Iterators
@@ -65,11 +75,18 @@ void* my_alloc(int size)
 			if (curr->block_size - size >= OVERHEAD_SIZE + POINTER_SIZE) 
             { 
 				// Create a pointer to the newly split block's position then assign its structure members.
-				//Your code
+				// Find byte location of where new block will start based on location of block being split and size.
+                //Your code
+                struct Block * new_block = (struct Block *)((char *) curr->block_size + size + OVERHEAD_SIZE);
                 
+                // Replace block with new block and link to the next block of current
+                new_block->next_block = curr->next_block;
 
+                free_head = new_block;
 				// Update Curr's block size as a result of splitting.
                 //Your code
+                
+                
 
 
 				// Adjust the double linked list, depending on whether curr is the head or not.
@@ -81,9 +98,10 @@ void* my_alloc(int size)
             { // Not splittable
 
 				// If curr is the head, curr's next block is the new head.
-                if (curr->next_block)
+                if (curr == free_head)
                 {
 				    //Your code
+                    free_head = curr->next_block;
 				}
 				else 
                 {
@@ -92,6 +110,7 @@ void* my_alloc(int size)
                     prev->next_block = curr->next_block;
                 }
 			}
+
 			// Since we found a block, no need to keep searching.
 			break;
 		}
@@ -104,6 +123,12 @@ void* my_alloc(int size)
 	}
 	// Return a pointer to the allocated data, if possible.
 	//Your code
+    if (curr == NULL)
+    {
+        return NULL;
+    }
+
+    
 }
 
 void my_free(void* data) {
